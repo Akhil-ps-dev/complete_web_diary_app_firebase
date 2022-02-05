@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_diary_web_app/models/user.dart';
 import 'package:flutter_diary_web_app/widgets/input_decoration.dart';
 
 class CreateAccountForm extends StatelessWidget {
@@ -59,11 +62,33 @@ class CreateAccountForm extends StatelessWidget {
                   textStyle: TextStyle(fontSize: 18)),
               onPressed: () {
                 if (_globalKey!.currentState!.validate()) {
+                  String email = _emailTextController.text;
+
                   FirebaseAuth.instance
                       .createUserWithEmailAndPassword(
-                          email: _emailTextController.text,
-                          password: _passwordTextController.text)
-                      .then((value) => print(value.user!.uid));
+                          email: email, password: _passwordTextController.text)
+                      .then((value) {
+//* create user
+//avatar
+//name
+//uid
+                    MUser user = MUser(
+                      displayName: email.split('@')[0],
+                      avatarUrl: 'https//google.com',
+                      profession: 'something',
+                      uid: value.user!.uid,
+                    );
+                    // Map<String, dynamic> user = {
+                    //   'display_name': email.toString().split('@')[0],
+                    //   'avatar_url': 'https//google.com',
+                    //   'profession': 'Hellow World',
+                    //   'uid': value.user!.uid
+                    // };
+
+                    FirebaseFirestore.instance
+                        .collection('users')
+                        .add(user.toMap());
+                  });
                 }
               },
               child: const Text('Create Account'))
