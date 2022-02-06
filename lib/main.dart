@@ -2,6 +2,7 @@ import 'dart:html';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_diary_web_app/screens/Login/login_page.dart';
 import 'package:flutter_diary_web_app/screens/getStarted/getstarted_page.dart';
 import 'package:flutter_diary_web_app/screens/main_page.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
           primarySwatch: Colors.blue,
         ),
-        home: const GettingStartedPage());
+        home: LoginPage());
   }
 }
 

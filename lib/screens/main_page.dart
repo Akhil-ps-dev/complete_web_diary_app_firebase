@@ -1,5 +1,12 @@
+import 'dart:html';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_diary_web_app/models/user.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+
+import '../widgets/create_profile.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -58,39 +65,25 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
               //TODO create profile
-              Container(
-                child: Row(
-                  children: [
-                    Column(
-                      children: const [
-                        Expanded(
-                            child: InkWell(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: CircleAvatar(
-                              radius: 30,
-                              backgroundImage: NetworkImage(
-                                  'https://picsum.photos/id/1/200/300'),
-                              backgroundColor: Colors.transparent,
-                            ),
-                          ),
-                        )),
-                        Text(
-                          'JAMES',
-                          style: TextStyle(color: Colors.black),
-                        )
-                      ],
-                    ),
-                    IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.logout,
-                          size: 19,
-                          color: Colors.red,
-                        ))
-                  ],
-                ),
-              )
+              StreamBuilder<QuerySnapshot>(
+                stream:
+                    FirebaseFirestore.instance.collection('users').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  }
+
+                  final usersListStream = snapshot.data!.docs.map((docs) {
+                    return MUser.fromDocument(docs);
+                  }).where((muser) {
+                    return (muser.uid ==
+                        FirebaseAuth.instance.currentUser!.uid);
+                  }).toList();
+                  MUser curUser = usersListStream[0];
+
+                  return CreateProfile(curUser: curUser);
+                },
+              ),
             ],
           ),
         ],
@@ -118,16 +111,15 @@ class _MainPageState extends State<MainPage> {
                     child: Card(
                       elevation: 4,
                       child: TextButton.icon(
-                        onPressed: () {},
                         icon: const Icon(
                           Icons.edit,
                           color: Colors.cyan,
                         ),
-                        label: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: const Expanded(
+                        label: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: Text(
                                 'Write New',
                                 style: TextStyle(fontSize: 15),
@@ -135,6 +127,117 @@ class _MainPageState extends State<MainPage> {
                             ),
                           ),
                         ),
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  elevation: 5,
+                                  content: Container(
+                                    width: MediaQuery.of(context).size.width,
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('Discard'),
+                                                style: TextButton.styleFrom(
+                                                    primary: Colors.red),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: TextButton(
+                                                child: const Text('Done'),
+                                                style: TextButton.styleFrom(
+                                                    elevation: 4,
+                                                    shape: RoundedRectangleBorder(
+                                                        side: BorderSide(
+                                                            width: 1,
+                                                            color: Colors.grey),
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                                Radius.circular(
+                                                                    15))),
+                                                    backgroundColor:
+                                                        Colors.cyanAccent,
+                                                    primary: Colors.white),
+                                                onPressed: () {},
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 30,
+                                        ),
+                                        Expanded(
+                                            flex: 1,
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  height: MediaQuery.of(context)
+                                                      .size
+                                                      .height,
+                                                  color: Colors.white12,
+                                                  child: Column(
+                                                    children: [
+                                                      IconButton(
+                                                          splashRadius: 26,
+                                                          onPressed: () {},
+                                                          icon: Icon(Icons
+                                                              .image_sharp))
+                                                    ],
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                    child: Column(
+                                                  children: [
+                                                    Text('jun 7 2022'),
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.5,
+                                                      child: Column(
+                                                        children: [
+                                                          SizedBox(
+                                                            height: (MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .height *
+                                                                    0.8) /
+                                                                2,
+                                                            child: Container(
+                                                                width: 700,
+                                                                color: Colors
+                                                                    .green,
+                                                                child: Text(
+                                                                    'image here')),
+                                                          ),
+                                                          TextFormField()
+                                                        ],
+                                                      ),
+                                                    )
+                                                  ],
+                                                ))
+                                              ],
+                                            ))
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              });
+                        },
                       ),
                     ),
                   ),
