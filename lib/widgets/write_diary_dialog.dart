@@ -3,6 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_diary_web_app/models/diary.dart';
 import 'package:flutter_diary_web_app/utils/utils.dart';
+import 'package:image_picker_web/image_picker_web.dart';
+import 'package:mime_type/mime_type.dart';
+import 'package:path/path.dart' as Path;
+import 'dart:html' as html;
 
 class WriteDiaryDialog extends StatefulWidget {
   const WriteDiaryDialog({
@@ -23,6 +27,10 @@ class WriteDiaryDialog extends StatefulWidget {
 }
 
 class _WriteDiaryDialogState extends State<WriteDiaryDialog> {
+  html.File? _cloudFile;
+  var _fileBytes;
+  Image? _imageWidget;
+
   var _buttonText = 'Done';
   CollectionReference diaryCollectionReference =
       FirebaseFirestore.instance.collection('diaries');
@@ -102,9 +110,12 @@ class _WriteDiaryDialogState extends State<WriteDiaryDialog> {
                       child: Column(
                         children: [
                           IconButton(
-                              splashRadius: 26,
-                              onPressed: () {},
-                              icon: Icon(Icons.image_sharp))
+                            splashRadius: 26,
+                            icon: Icon(Icons.image_sharp),
+                            onPressed: () async {
+                              await getMultipleImageInfos();
+                            },
+                          )
                         ],
                       ),
                     ),
@@ -124,10 +135,7 @@ class _WriteDiaryDialogState extends State<WriteDiaryDialog> {
                                 height:
                                     (MediaQuery.of(context).size.height * 0.8) /
                                         2,
-                                child: Container(
-                                    width: 700,
-                                    color: Colors.green,
-                                    child: Text('image here')),
+                                child: _imageWidget
                               ),
                               TextFormField(
                                 controller: widget._titleTextController,
@@ -151,5 +159,18 @@ class _WriteDiaryDialogState extends State<WriteDiaryDialog> {
         ),
       ),
     );
+  }
+
+  Future<void> getMultipleImageInfos() async {
+    var mediaData = await ImagePickerWeb.getImageInfo;
+    //String? mimeType = mime(Path.basename(mediaData.fileName!));
+    // html.File mediaFile =
+    //     new html.File(mediaData.data!, mediaData.fileName!, {'type': mimeType});
+
+    setState(() {
+      // _cloudFile = mediaFile;
+      _fileBytes = mediaData.data;
+      _imageWidget = Image.memory(mediaData.data!);
+    });
   }
 }
