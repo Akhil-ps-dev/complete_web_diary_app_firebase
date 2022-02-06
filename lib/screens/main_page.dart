@@ -1,12 +1,13 @@
-import 'dart:html';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_diary_web_app/models/diary.dart';
 import 'package:flutter_diary_web_app/models/user.dart';
+import 'package:flutter_diary_web_app/widgets/write_diary_dialog.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 import '../widgets/create_profile.dart';
+import '../widgets/diary_list_view.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -16,6 +17,11 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  DateTime selectedDate = DateTime.now();
+
+  final _titleTextController = TextEditingController();
+  final _descriptionTextController = TextEditingController();
+
   String? _dropDownText;
   @override
   Widget build(BuildContext context) {
@@ -91,7 +97,7 @@ class _MainPageState extends State<MainPage> {
       body: Row(
         children: [
           Expanded(
-            flex: 2,
+            flex: 4,
             child: Container(
               height: MediaQuery.of(context).size.height,
               decoration: const BoxDecoration(
@@ -103,7 +109,11 @@ class _MainPageState extends State<MainPage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: SfDateRangePicker(
-                      onSelectionChanged: (dateRangePickerSelection) {},
+                      onSelectionChanged: (dateRangePickerSelection) {
+                        setState(() {
+                          selectedDate = dateRangePickerSelection.value;
+                        });
+                      },
                     ),
                   ),
                   Padding(
@@ -131,111 +141,11 @@ class _MainPageState extends State<MainPage> {
                           showDialog(
                               context: context,
                               builder: (context) {
-                                return AlertDialog(
-                                  elevation: 5,
-                                  content: Container(
-                                    width: MediaQuery.of(context).size.width,
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: const Text('Discard'),
-                                                style: TextButton.styleFrom(
-                                                    primary: Colors.red),
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: TextButton(
-                                                child: const Text('Done'),
-                                                style: TextButton.styleFrom(
-                                                    elevation: 4,
-                                                    shape: RoundedRectangleBorder(
-                                                        side: BorderSide(
-                                                            width: 1,
-                                                            color: Colors.grey),
-                                                        borderRadius:
-                                                            BorderRadius.all(
-                                                                Radius.circular(
-                                                                    15))),
-                                                    backgroundColor:
-                                                        Colors.cyanAccent,
-                                                    primary: Colors.white),
-                                                onPressed: () {},
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          height: 30,
-                                        ),
-                                        Expanded(
-                                            flex: 1,
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  height: MediaQuery.of(context)
-                                                      .size
-                                                      .height,
-                                                  color: Colors.white12,
-                                                  child: Column(
-                                                    children: [
-                                                      IconButton(
-                                                          splashRadius: 26,
-                                                          onPressed: () {},
-                                                          icon: Icon(Icons
-                                                              .image_sharp))
-                                                    ],
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                    child: Column(
-                                                  children: [
-                                                    Text('jun 7 2022'),
-                                                    SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.5,
-                                                      child: Column(
-                                                        children: [
-                                                          SizedBox(
-                                                            height: (MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .height *
-                                                                    0.8) /
-                                                                2,
-                                                            child: Container(
-                                                                width: 700,
-                                                                color: Colors
-                                                                    .green,
-                                                                child: Text(
-                                                                    'image here')),
-                                                          ),
-                                                          TextFormField()
-                                                        ],
-                                                      ),
-                                                    )
-                                                  ],
-                                                ))
-                                              ],
-                                            ))
-                                      ],
-                                    ),
-                                  ),
-                                );
+                                return WriteDiaryDialog(
+                                    selectedDate: selectedDate,
+                                    titleTextController: _titleTextController,
+                                    descriptionTextController:
+                                        _descriptionTextController);
                               });
                         },
                       ),
@@ -245,37 +155,7 @@ class _MainPageState extends State<MainPage> {
               ),
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: Container(
-              child: Column(
-                children: [
-                  Expanded(
-                      child: Container(
-                    child: Column(
-                      children: [
-                        Expanded(
-                            child: ListView.builder(
-                          itemCount: 5,
-                          itemBuilder: (context, index) {
-                            return SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.4,
-                              child: const Card(
-                                elevation: 4,
-                                child: ListTile(
-                                  title: Text("Hello"),
-                                ),
-                              ),
-                            );
-                          },
-                        ))
-                      ],
-                    ),
-                  ))
-                ],
-              ),
-            ),
-          )
+          const Expanded(flex: 10, child: DiaryListView())
         ],
       ),
       floatingActionButton: FloatingActionButton(
