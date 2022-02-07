@@ -4,7 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_diary_web_app/models/diary.dart';
+import 'package:flutter_diary_web_app/screens/main_page.dart';
 import 'package:flutter_diary_web_app/utils/utils.dart';
+import 'package:flutter_diary_web_app/widgets/delete_entry_dialog.dart';
+import 'package:universal_html/js.dart';
 
 class DiaryListView extends StatelessWidget {
   const DiaryListView({
@@ -13,8 +16,10 @@ class DiaryListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    CollectionReference bookCollectionReference =
+        FirebaseFirestore.instance.collection('diaries');
     return StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('diaries').snapshots(),
+        stream: bookCollectionReference.snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return LinearProgressIndicator();
@@ -35,6 +40,7 @@ class DiaryListView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     Diary diary = filteredList[index];
                     return Card(
+                      //selectedDate:
                       elevation: 4,
                       child: Column(
                         children: [
@@ -53,11 +59,20 @@ class DiaryListView extends StatelessWidget {
                                         fontWeight: FontWeight.bold),
                                   ),
                                   TextButton.icon(
-                                      onPressed: () {},
                                       icon: const Icon(
                                         Icons.delete_forever,
                                         color: Colors.red,
                                       ),
+                                      onPressed: () {
+                                        showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return DeleteEntryDialog(
+                                                  context,
+                                                  bookCollectionReference,
+                                                  diary);
+                                            });
+                                      },
                                       label: const Text(''))
                                 ],
                               ),
@@ -82,7 +97,9 @@ class DiaryListView extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                Image.network('https://picsum.photos/200/300'),
+                                Image.network((diary.photoUrls == null)
+                                    ? 'https://picsum.photos/200/300'
+                                    : diary.photoUrls.toString()),
                                 Row(
                                   children: [
                                     Flexible(
@@ -113,6 +130,142 @@ class DiaryListView extends StatelessWidget {
                                 )
                               ],
                             ),
+                            onTap: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.3,
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  '${formatDateFromTimestamp(diary.entryTime)}',
+                                                  style: TextStyle(
+                                                      color: Colors.blueGrey,
+                                                      fontSize: 19,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                Spacer(),
+                                                IconButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return Container();
+                                                        });
+                                                  },
+                                                  icon: Icon(Icons.edit),
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.delete),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return DeleteEntryDialog(
+                                                              context,
+                                                              bookCollectionReference,
+                                                              diary);
+                                                        });
+                                                  },
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      content: ListTile(
+                                        subtitle: Column(
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  '${formatDateFromTimestampHour(diary.entryTime)}',
+                                                  style: TextStyle(
+                                                      color: Colors.green,
+                                                      fontSize: 19,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.60,
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  0.50,
+                                              child: Image.network((diary
+                                                          .photoUrls ==
+                                                      null)
+                                                  ? 'https://picsum.photos/200/300'
+                                                  : diary.photoUrls.toString()),
+                                            ),
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                    child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        '${diary.title}',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        '${diary.entry}',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    )
+                                                  ],
+                                                ))
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text('Cancel'))
+                                      ],
+                                    );
+                                  });
+                            },
                           ),
                         ],
                       ),
