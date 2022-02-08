@@ -10,7 +10,7 @@ import 'package:path/path.dart' as Path;
 import 'dart:html' as html;
 
 class WriteDiaryDialog extends StatefulWidget {
-  const WriteDiaryDialog({
+   WriteDiaryDialog({
     Key? key,
     this.selectedDate,
     required TextEditingController titleTextController,
@@ -111,7 +111,7 @@ class _WriteDiaryDialogState extends State<WriteDiaryDialog> {
                                 contentType: 'image/jpeg',
                                 customMetadata: {'picked-file-path': path});
 
-                        Future.delayed(.................const Duration(milliseconds: 1500))
+                        Future.delayed(const Duration(milliseconds: 1500))
                             .then((value) {
                           fs
                               .ref()
