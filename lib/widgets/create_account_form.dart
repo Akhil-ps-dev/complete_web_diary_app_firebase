@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_diary_web_app/models/user.dart';
+import 'package:flutter_diary_web_app/screens/main_page.dart';
+import 'package:flutter_diary_web_app/services/service.dart';
 import 'package:flutter_diary_web_app/widgets/input_decoration.dart';
 
 class CreateAccountForm extends StatelessWidget {
@@ -27,7 +26,7 @@ class CreateAccountForm extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
+          const Text(
               'Please enter a valid email and password this is at least 6 charactors '),
           Padding(
             padding: const EdgeInsets.all(15.0),
@@ -50,7 +49,7 @@ class CreateAccountForm extends StatelessWidget {
               },
             ),
           ),
-          SizedBox(height: 20),
+      const    SizedBox(height: 20),
           TextButton(
               style: TextButton.styleFrom(
                   backgroundColor: Colors.redAccent,
@@ -68,26 +67,21 @@ class CreateAccountForm extends StatelessWidget {
                       .createUserWithEmailAndPassword(
                           email: email, password: _passwordTextController.text)
                       .then((value) {
-//* create user
-//avatar
-//name
-//uid
-                    MUser user = MUser(
-                      displayName: email.split('@')[0],
-                      avatarUrl: 'https//google.com',
-                      profession: 'something',
-                      uid: value.user!.uid,
-                    );
-                    // Map<String, dynamic> user = {
-                    //   'display_name': email.toString().split('@')[0],
-                    //   'avatar_url': 'https//google.com',
-                    //   'profession': 'Hellow World',
-                    //   'uid': value.user!.uid
-                    // };
-
-                    FirebaseFirestore.instance
-                        .collection('users')
-                        .add(user.toMap());
+                    if (value.user != null) {
+                      String uid = value.user!.uid;
+                      DiaryService()
+                          .createUser(email.split('@')[0], context, uid)
+                          .then((value) {
+                        DiaryService()
+                            .loginUser(email, _passwordTextController.text)
+                            .then((value) {
+                          return Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => MainPage()));
+                        });
+                      });
+                    }
                   });
                 }
               },

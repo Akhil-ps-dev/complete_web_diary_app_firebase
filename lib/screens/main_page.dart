@@ -1,5 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_diary_web_app/models/diary.dart';
+import 'package:flutter_diary_web_app/models/user.dart';
+import 'package:flutter_diary_web_app/widgets/write_diary_dialog.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+
+import '../widgets/create_profile.dart';
+import '../widgets/diary_list_view.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -9,6 +17,11 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  DateTime selectedDate = DateTime.now();
+
+  final _titleTextController = TextEditingController();
+  final _descriptionTextController = TextEditingController();
+
   String? _dropDownText;
   @override
   Widget build(BuildContext context) {
@@ -58,39 +71,25 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
               //TODO create profile
-              Container(
-                child: Row(
-                  children: [
-                    Column(
-                      children: const [
-                        Expanded(
-                            child: InkWell(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: CircleAvatar(
-                              radius: 30,
-                              backgroundImage: NetworkImage(
-                                  'https://picsum.photos/id/1/200/300'),
-                              backgroundColor: Colors.transparent,
-                            ),
-                          ),
-                        )),
-                        Text(
-                          'JAMES',
-                          style: TextStyle(color: Colors.black),
-                        )
-                      ],
-                    ),
-                    IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.logout,
-                          size: 19,
-                          color: Colors.red,
-                        ))
-                  ],
-                ),
-              )
+              StreamBuilder<QuerySnapshot>(
+                stream:
+                    FirebaseFirestore.instance.collection('users').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  }
+
+                  final usersListStream = snapshot.data!.docs.map((docs) {
+                    return MUser.fromDocument(docs);
+                  }).where((muser) {
+                    return (muser.uid ==
+                        FirebaseAuth.instance.currentUser!.uid);
+                  }).toList();
+                  MUser curUser = usersListStream[0];
+
+                  return CreateProfile(curUser: curUser);
+                },
+              ),
             ],
           ),
         ],
@@ -98,7 +97,7 @@ class _MainPageState extends State<MainPage> {
       body: Row(
         children: [
           Expanded(
-            flex: 2,
+            flex: 4,
             child: Container(
               height: MediaQuery.of(context).size.height,
               decoration: const BoxDecoration(
@@ -110,7 +109,11 @@ class _MainPageState extends State<MainPage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: SfDateRangePicker(
-                      onSelectionChanged: (dateRangePickerSelection) {},
+                      onSelectionChanged: (dateRangePickerSelection) {
+                        setState(() {
+                          selectedDate = dateRangePickerSelection.value;
+                        });
+                      },
                     ),
                   ),
                   Padding(
@@ -118,16 +121,15 @@ class _MainPageState extends State<MainPage> {
                     child: Card(
                       elevation: 4,
                       child: TextButton.icon(
-                        onPressed: () {},
                         icon: const Icon(
                           Icons.edit,
                           color: Colors.cyan,
                         ),
-                        label: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: const Expanded(
+                        label: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: Text(
                                 'Write New',
                                 style: TextStyle(fontSize: 15),
@@ -135,6 +137,17 @@ class _MainPageState extends State<MainPage> {
                             ),
                           ),
                         ),
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return WriteDiaryDialog(
+                                    selectedDate: selectedDate,
+                                    titleTextController: _titleTextController,
+                                    descriptionTextController:
+                                        _descriptionTextController);
+                              });
+                        },
                       ),
                     ),
                   ),
@@ -142,37 +155,7 @@ class _MainPageState extends State<MainPage> {
               ),
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: Container(
-              child: Column(
-                children: [
-                  Expanded(
-                      child: Container(
-                    child: Column(
-                      children: [
-                        Expanded(
-                            child: ListView.builder(
-                          itemCount: 5,
-                          itemBuilder: (context, index) {
-                            return SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.4,
-                              child: const Card(
-                                elevation: 4,
-                                child: ListTile(
-                                  title: Text("Hello"),
-                                ),
-                              ),
-                            );
-                          },
-                        ))
-                      ],
-                    ),
-                  ))
-                ],
-              ),
-            ),
-          )
+           Expanded(flex: 10, child: DiaryListView())
         ],
       ),
       floatingActionButton: FloatingActionButton(
